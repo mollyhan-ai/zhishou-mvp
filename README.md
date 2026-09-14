@@ -1,5 +1,7 @@
 # 知兽 MVP
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mollyhan-ai/zhishou-mvp)
+
 知兽是一个本地运行的兽医 AI 病历工具。它把一次问诊按以下流程处理：
 
 1. 浏览器录音或上传音频；
@@ -20,7 +22,7 @@
 - 原生 HTML、CSS、JavaScript，无 Node.js 构建步骤
 - OpenAI 兼容的语音识别与 Chat Completions 接口；也支持豆包音频理解配置
 
-`requirements.txt` 目前只声明 `Flask` 和 `requests`。上面的版本是本项目当前虚拟环境中已通过测试的版本。
+`requirements.txt` 声明 `Flask`、`requests` 和生产启动使用的 `gunicorn`。上面的版本是本项目当前虚拟环境中已通过测试的版本。
 
 ## 目录结构
 
