@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: zhishou-mvp
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 240
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: ZS_DB_PATH
+        value: /tmp/zhishou/zhishou.db
+      - key: ZS_AUDIO_DIR
+        value: /tmp/zhishou/audio
+      - key: ZS_KB_MODE
+        value: placeholder
+      - key: ZS_MAX_AUDIO_MB
+        value: 20
