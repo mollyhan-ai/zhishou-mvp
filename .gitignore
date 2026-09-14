@@ -1,0 +1,32 @@
+# Local configuration and credentials
+.env*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend/build artifacts
+node_modules/
+dist/
+
+# Local clinical data, recordings, and backups
+.backups/
+data/*
+!data/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+*.wav
+*.webm
+*.mp3
+*.m4a
+*.aac
+*.amr
+
+# Local machine files
+.DS_Store

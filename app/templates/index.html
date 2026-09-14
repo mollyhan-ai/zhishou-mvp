@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="management-token" content="{{ config.MANAGEMENT_TOKEN }}">
+<title>知兽 · 兽医病历助手</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='document-layout.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='pets.css') }}">
+</head>
+<body class="document-app">
+
+<header class="topbar app-rail" aria-label="产品导航">
+  <div class="brand">知兽<span class="brand-sub">兽医病历助手</span>
+</div>
+  <button id="btnToolbarNew" class="btn rail-create" title="新建会话"><span aria-hidden="true">＋</span><span class="sr-only">新建会话</span>
+</button>
+<nav class="tabs" role="tablist">
+    <button class="tab is-active" data-view="scribe" role="tab" aria-selected="true" aria-label="病历助手"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12v-2m4 6V6m3 14V3m4 13V7m4 6v-3"></path></svg><span>病历</span>
+</button>
+
+    <button class="tab" data-view="pets" role="tab" aria-selected="false" aria-label="宠物档案"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-3a8 8 0 0 1 16 0v3"></path></svg><span>档案</span></button>
+<button class="tab" data-view="manage" role="tab" aria-selected="false" aria-label="设置与管理"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"></path></svg><span>设置</span>
+</button>
+  </nav>
+</header>
+
+<div id="configBanner" class="banner banner-config" hidden="">
+</div>
+
+<!-- ══════════════ 病历助手 ══════════════ -->
+<div id="scribeLayout" class="scribe-layout">
+  <aside id="sessionSidebar" class="session-sidebar" aria-label="会话历史">
+    <div class="sidebar-heading"><h2>会话</h2>
+<button id="btnSidebarNew" class="btn btn-ghost btn-inline">＋ 新建</button>
+<button id="btnCloseSessions" class="btn btn-quiet btn-inline" aria-label="收起会话历史" title="收起会话历史">‹</button>
+</div>
+    <p class="hint sidebar-caption">全部会话 · 保存在本机</p>
+
+    <div class="sidebar-list-heading"><span id="sidebarCount" class="hint"></span>
+<button id="btnSidebarRefresh" class="btn btn-quiet btn-inline">刷新</button>
+</div>
+    <div id="sessionList" class="session-list" aria-live="polite">
+</div>
+    <div class="sidebar-pages">
+<button id="btnSidebarPrev" class="btn btn-ghost btn-inline" disabled="">上一页</button><span id="sidebarPage" class="hint"></span>
+<button id="btnSidebarNext" class="btn btn-ghost btn-inline" disabled="">下一页</button>
+</div>
+  </aside>
+    <div class="workspace-toolbar" aria-label="问诊工作区工具栏">
+      <div class="workspace-navigation"><button id="btnToggleSessions" class="btn btn-ghost btn-inline" aria-controls="sessionSidebar" aria-expanded="true" aria-label="会话历史" title="会话历史"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16"></path></svg>
+</button><button id="btnSessionPet" class="btn btn-ghost btn-inline" title="关联宠物档案">选择宠物</button><nav class="document-tabs" role="tablist" aria-label="会话内容">
+<button id="tab-history" class="document-tab " type="button" role="tab" data-document-tab="history" aria-controls="panel-history" aria-selected="false" tabindex="-1"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14M9 3v6M15 9v6M9 15v6"/></svg><span>既往背景</span></button>
+<button id="tab-transcript" class="document-tab is-active" type="button" role="tab" data-document-tab="transcript" aria-controls="panel-transcript" aria-selected="true" tabindex="0"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg><span>逐字稿</span></button>
+<button id="tab-soap" class="document-tab " type="button" role="tab" data-document-tab="soap" aria-controls="panel-soap" aria-selected="false" tabindex="-1"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4 5 5-11 11H4v-5zM13 6l5 5"/></svg><span>病历</span></button>
+</nav><button id="btnGenerate" class="btn toolbar-generate" type="button">生成病历</button></div>
+      <div class="workspace-actions"><div class="record-controls">
+<button id="btnRecord" class="btn btn-primary">开始录音</button>
+<details id="recordMenu" class="record-menu"><summary class="btn btn-ghost" aria-label="更多音频操作" title="更多音频操作">⌄</summary><div class="record-menu-items"><button id="btnUploadAudio" class="btn btn-quiet" type="button">上传音频</button></div></details>
+<input id="fileInput" type="file" accept="audio/*" hidden>
+</div><button id="btnToggleDetails" class="btn btn-ghost btn-inline" aria-controls="sessionDetails" aria-expanded="false" aria-label="会话详情" title="会话详情"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></svg>
+</button></div>
+<span id="currentSessionTitle" class="current-session-title" hidden>新会话</span>
+</div>
+  <div class="scribe-center">
+<div id="statusStrip" class="status-strip" hidden="" role="status" aria-live="polite">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText"></span>
+      <button id="btnRetry" class="btn btn-inline" hidden="">重试</button>
+    </div>
+<main id="view-scribe" class="workspace document-workspace">
+<div class="document-area">
+<div class="document-actions"><span id="documentState" class="hint">本次问诊</span>
+<button id="btnToggleReview" class="btn btn-ghost btn-inline" aria-controls="reviewPanel" aria-expanded="false">核对清单</button>
+<button id="btnCopy" class="btn btn-ghost" disabled="">复制全部</button>
+
+<details class="document-more"><summary class="btn btn-quiet btn-inline" aria-label="更多会话操作" title="更多会话操作">···</summary>
+<div class="document-more-menu">
+<button id="btnExport" class="btn btn-ghost" disabled="">导出 txt</button>
+<button id="btnDeleteNote" class="btn btn-quiet btn-inline">删除病历</button>
+<button id="btnDeleteAll" class="btn btn-quiet">删除本次会话</button>
+</div>
+</details>
+</div>
+<section id="panel-patient" class="document-panel patient-workspace" aria-labelledby="patientWorkspaceName" hidden>
+  <div class="patient-workspace-heading">
+    <div><h1 id="patientWorkspaceName">宠物档案</h1><p id="patientWorkspaceNumber" class="hint"></p></div>
+    <div class="controls"><button id="btnPatientNewConsult" class="btn btn-ghost">＋ 新建问诊</button><button id="btnPatientUnlink" class="btn btn-quiet" type="button">解除本次关联</button><button id="btnPatientReturn" class="btn btn-quiet">返回本次问诊</button></div>
+  </div>
+  <p class="hint">查看此宠物的历史记录与档案资料。右侧仍显示本次问诊信息。</p>
+  <nav class="patient-workspace-tabs" role="tablist" aria-label="宠物档案">
+    <button id="patient-tab-visits" class="document-tab is-active" role="tab" aria-selected="true" aria-controls="patient-visits">问诊记录</button>
+    <button id="patient-tab-profile" class="document-tab" role="tab" aria-selected="false" aria-controls="patient-profile" tabindex="-1">档案资料</button>
+  </nav>
+  <section id="patient-visits" role="tabpanel" aria-labelledby="patient-tab-visits">
+    <div class="controls"><p id="patientVisitsStatus" class="hint" role="status"></p><button id="btnPatientVisitsRefresh" class="btn btn-quiet btn-inline">刷新记录</button></div>
+    <div id="patientVisitsList"></div>
+    <div class="controls patient-workspace-pages"><button id="patientVisitsPrev" class="btn btn-ghost btn-inline">上一页</button><span id="patientVisitsPage" class="hint"></span><button id="patientVisitsNext" class="btn btn-ghost btn-inline">下一页</button></div>
+  </section>
+  <section id="patient-profile" role="tabpanel" aria-labelledby="patient-tab-profile" hidden>
+    <div class="controls"><p class="hint">资料修改需兽医核对。本次问诊已带入的背景快照不会被自动改写。</p><button id="btnPatientProfileEdit" class="btn btn-ghost btn-inline">核对并修改资料</button></div>
+    <div id="patientWorkspaceProfile"></div><div id="patientInlineEditor" hidden><div id="patientInlineFormHost"></div><button id="btnCancelInlinePatient" class="btn btn-quiet" type="button">取消修改</button></div>
+  </section>
+</section>
+<section id="panel-history" class="document-panel" role="tabpanel" aria-labelledby="tab-history" hidden="">
+<details id="historyPanel" class="block history-context" open="">
+      <summary class="block-title">既往病历 <span class="count">选填 · 本次会话使用</span></summary>
+      <p class="hint">粘贴既往就诊记录、用药、过敏史等。原文仅用于整理摘要，不会直接作为本次病历依据。</p>
+      <label for="historyRaw">既往病历原文</label>
+      <textarea id="historyRaw" rows="5" maxlength="30000" placeholder="粘贴或输入纯文本；没有既往记录可留空。"></textarea>
+      <div class="controls">
+<button id="btnHistoryGenerate" class="btn btn-primary">生成既往摘要</button>
+        <button id="btnHistorySaveRaw" class="btn btn-ghost">保存原文</button>
+</div>
+      <div id="historyStatus" class="hint" role="status" aria-live="polite">
+</div>
+      <div id="historyStale" class="history-warning" hidden="">原文已变化，旧摘要暂不参与病历生成和核对。请重新生成，或核对并保存摘要。</div>
+      <div class="history-summary">
+        <p class="hint">请核对摘要后使用。兽医保存后的摘要是最终依据；修改或清空会重新核对本次病历并撤销确认。</p>
+        <label for="historyMedications">长期用药</label>
+        <textarea id="historyMedications" data-history-field="medications" rows="2" maxlength="6000" placeholder="未提及"></textarea>
+        <label for="historyDiagnoses">慢性病/既往诊断</label>
+        <textarea id="historyDiagnoses" data-history-field="diagnoses" rows="2" maxlength="6000" placeholder="未提及"></textarea>
+        <label for="historyAllergies">过敏史</label>
+        <textarea id="historyAllergies" data-history-field="allergies" rows="2" maxlength="6000" placeholder="未提及"></textarea>
+        <label for="historyOther">其他需留意信息</label>
+        <textarea id="historyOther" data-history-field="other" rows="2" maxlength="6000" placeholder="未提及"></textarea>
+        <button id="btnHistorySaveSummary" class="btn btn-ghost">保存摘要</button>
+      </div>
+    </details>
+</section>
+<section id="panel-transcript" class="document-panel" role="tabpanel" aria-labelledby="tab-transcript">
+<div class="block audio-block">
+      <h2 class="block-title">音频</h2>
+      <div class="controls">
+        <button id="btnDeleteAudio" class="btn btn-quiet" hidden="">删除音频</button>
+      </div>
+      <div id="audioMeta" class="meta">
+</div>
+      <audio id="player" controls="" hidden=""></audio>
+    </div>
+<div class="block block-grow">
+      <h2 class="block-title" id="transcriptTitle">
+        逐字稿
+        <span class="block-actions">
+          <button id="btnTranscribe" class="btn btn-inline">转写</button>
+          <button id="btnDeleteTranscript" class="btn btn-quiet btn-inline">删除</button>
+        </span>
+      </h2>
+      <p class="hint">录音停止或音频上传后会自动转写并生成 SOAP。转写结果可以直接改；兽医修改后的逐字稿是本次问诊依据，既往摘要作为单独的背景参考。</p>
+
+      <textarea id="transcript" class="transcript" placeholder="转写结果会出现在这里，也可以直接粘贴或手动输入。" aria-labelledby="transcriptTitle"></textarea>
+      <div id="transcriptMeta" class="meta">
+</div>
+      <p class="hint">请对照录音检查是否漏字、漏句。核对清单只比对病历与文字依据，不检查录音是否完整转写。</p>
+    </div>
+</section>
+<section id="panel-soap" class="document-panel" role="tabpanel" aria-labelledby="tab-soap" hidden="">
+<div class="block soap-document">
+
+
+      <div id="evidenceChanged" class="history-warning" hidden="">依据已修改，核对清单已更新。请重新生成或通读并核对病历后再次确认。</div>
+      <div id="noteFields" class="note">
+<div class="note-empty">还没有病历。先在「逐字稿」中转写或输入内容，再点「生成病历」。</div>
+</div>
+      <div id="uncertainBox" class="uncertain" hidden="">
+</div>
+    <details class="note-guidance"><summary>书写与核对规则</summary><p class="hint">本次逐字稿未提及的检查、判断和处置写「未提及」。既往背景标注「（既往病史）」，不当作本次诊断或处方。</p>
+</details>
+</div>
+</section>
+</div>
+
+<aside id="reviewPanel" class="review-panel" aria-label="核对清单" hidden="">
+<div class="block review-checklist">
+      <h2 class="block-title">核对清单<span id="flagCount" class="count"></span>
+<button id="btnCloseReview" class="btn btn-quiet btn-inline" aria-label="收起核对清单">收起</button></h2>
+      <p class="hint">程序逐条比对逐字稿与有效既往摘要；否定关系按来源分别核对。点一条可查看两路依据。</p>
+      <ul id="flagList" class="flags"><li class="flags-idle">生成病历后，这里会逐条列出病历中出现、但逐字稿与有效既往摘要里都找不到的药名、剂量、频次、疗程和被翻转的否定关系。</li></ul>
+    </div>
+<section id="reviewSources" class="block review-sources" hidden=""><h3 class="block-title">文字依据</h3><p id="reviewPending" class="hint hint-warn" hidden="">有修改尚未保存，当前核对结果待更新。</p><p class="hint">原文匹配仅用于定位，判定以核对清单为准。</p>
+<div id="transcriptHighlight" class="transcript-overlay" hidden="">
+</div>
+<details class="source-reading" open=""><summary>本次逐字稿</summary>
+<pre id="reviewTranscript" class="source-text">
+</pre>
+<button class="btn btn-ghost btn-inline" data-edit-source="transcript">编辑逐字稿</button>
+</details>
+<details class="source-reading" open=""><summary>有效既往摘要</summary><p id="reviewHistoryState" class="hint"></p>
+<pre id="reviewHistory" class="source-text">
+</pre>
+<button class="btn btn-ghost btn-inline" data-edit-source="history">编辑既往摘要</button>
+</details>
+</section>
+</aside>
+</main>
+
+<!-- 签署栏 -->
+<footer id="signbar" class="signbar">
+  <div class="sign-state">
+    <span id="signBadge" class="badge badge-pending">待兽医确认</span>
+    <span id="signNote" class="sign-note">病历未经确认前不能复制或导出。</span>
+  </div>
+  <div class="sign-actions">
+    <input id="confirmedBy" class="input" placeholder="确认人（姓名或工号）" autocomplete="off">
+    <button id="btnConfirm" class="btn btn-confirm">确认无误</button>
+    <button id="btnUnconfirm" class="btn btn-quiet" hidden="">撤销确认</button>
+
+
+
+  </div>
+</footer>
+  </div>
+  <aside id="sessionDetails" class="session-details consult-details" aria-label="本次问诊详情">
+    <div class="sidebar-heading consult-mobile-heading"><h2>本次问诊详情</h2><button id="btnCloseDetails" class="btn btn-quiet btn-inline" aria-label="收起问诊详情">收起</button></div>
+    <details id="consultSessionCard" class="consult-card" open><summary>本次问诊</summary>
+      <div class="quick-patient"><button id="btnQuickPatient" class="consult-row patient-link" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="quickPatientMenu"><span id="quickPatientAvatar" class="consult-avatar" aria-hidden="true">＋</span><span id="quickPatientName">添加宠物</span><span aria-hidden="true">⌄</span></button>
+      <div id="quickPatientMenu" class="quick-patient-menu" role="dialog" aria-label="搜索或新建宠物档案" hidden>
+        <div class="quick-search"><label class="sr-only" for="quickPatientSearch">搜索编号、姓名或别名</label><input id="quickPatientSearch" class="input" maxlength="80" placeholder="搜索编号、姓名或别名" autocomplete="off"><button id="btnCloseQuickPatient" class="btn btn-quiet" aria-label="关闭宠物搜索">×</button></div>
+        <button id="btnClearQuickPatient" class="btn btn-quiet btn-inline" type="button" hidden>清空搜索</button><div id="quickPatientResults" role="status"></div><button id="btnQuickMore" class="btn btn-quiet btn-inline" hidden>更多结果</button>
+        <button id="btnQuickCreate" class="consult-row" type="button">＋ 新建宠物档案</button><button id="btnQuickUnlinked" class="consult-row" type="button">暂不关联，继续本次会话</button>
+      </div><div id="linkedPatientMenu" class="quick-patient-menu linked-patient-menu" role="dialog" aria-label="已关联宠物" hidden><button id="btnLinkedProfile" class="consult-row" type="button">查看档案</button><button id="btnLinkedUnlink" class="consult-row" type="button">解除本次关联</button></div></div><button id="sessionComplaintRow" class="consult-info summary-edit-trigger" type="button" title="点击修改问诊摘要" aria-label="修改问诊摘要" aria-controls="sessionSummaryForm" aria-expanded="false" hidden><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span id="sessionComplaint"></span><span class="summary-edit-hint" aria-hidden="true">修改</span></button>
+<form id="sessionSummaryForm" class="summary-editor" hidden>
+<label for="sessionSummaryInput">问诊摘要</label>
+<textarea id="sessionSummaryInput" rows="3" maxlength="200" placeholder="填写方便查找这次问诊的简短摘要"></textarea>
+<p class="hint">仅用于展示和查找，不修改病历正文。清空后保存可恢复自动摘要。</p>
+<div class="controls"><button id="btnSaveSessionSummary" class="btn btn-primary btn-inline" type="submit">保存</button><button id="btnCancelSessionSummary" class="btn btn-quiet btn-inline" type="button">取消</button></div>
+<p id="sessionSummaryError" class="hint" role="alert"></p>
+</form>
+
+<dl class="consult-info-list"><dt id="sessionTimeLabel" class="sr-only">创建时间</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><span id="sessionTime">尚未创建</span></dd><dt id="sessionDurationLabel" class="sr-only">录制时长</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="sessionDuration">尚无录音</span></dd><dt class="sr-only">转写语言</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 3v2M6 5c0 6 3 9 8 11M12 5c0 6-3 9-9 11M14 21l4-10 4 10M16 17h4"/></svg><span id="sessionLanguage">未记录</span></dd></dl>
+<button id="btnSessionShare" class="consult-row" type="button" disabled title="分享功能尚未开放"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V3M7 8l5-5 5 5M5 13v7h14v-7"/></svg><span>分享<span class="consult-coming">即将开放</span></span></button>
+<details id="consultMore" class="consult-more"><summary><span class="consult-ellipsis" aria-hidden="true">···</span>更多选项 <span id="patientReviewCount"></span></summary>
+<button id="btnSummaryPatientArchive" class="consult-row" type="button" hidden>查看宠物档案</button>
+    <details id="patientReviewDetails" class="consult-subsection"><summary>宠物资料与核对</summary><aside id="patientCard" class="patient-card" aria-label="本次就诊对象" hidden>
+<h2 class="block-title">本次就诊对象</h2><p id="patientCardState" class="hint" role="status"></p>
+<div id="patientCardBody"></div><div class="patient-card-actions">
+<button id="btnPatientExtract" class="btn btn-ghost btn-inline">读取疑似资料</button>
+<button id="btnPatientMatch" class="btn btn-ghost btn-inline">匹配到已有档案</button>
+<button id="btnPatientCreate" class="btn btn-primary btn-inline">新建档案</button>
+<button id="btnPatientReview" class="btn btn-ghost btn-inline" hidden>核对 / 更新本次背景</button>
+</div><p class="hint">可先录音。疑似资料不会自动保存；未建档时仍可核对并确认本次病历。</p>
+</aside></details>
+    <details class="consult-subsection"><summary>技术详情</summary><dl class="session-metadata"><dt>创建时间</dt><dd id="detailCreated">尚未创建</dd><dt>病历生成时间</dt><dd id="detailGenerated">尚未生成</dd><dt>音频时长</dt><dd id="detailDuration">尚无音频</dd><dt>转写引擎</dt><dd id="detailAsr">尚未转写</dd><dt>生成模型</dt><dd id="detailModel">尚未生成</dd></dl><details class="current-config"><summary>当前服务配置</summary><div id="configStatus" class="config-status"></div></details></details>
+</details>
+    </details>
+    <details id="consultNoteCard" class="consult-card" open><summary>病历</summary>
+<dl class="consult-info-list"><dt class="sr-only">模板</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 15h7M14 20h7"/></svg><span >SOAP 病历</span></dd><dt class="sr-only">状态</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/></svg><span id="sessionNoteState">尚未生成</span></dd><dt class="sr-only">最后编辑</dt><dd class="consult-info"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6M3 3v5h5M12 7v5l3 2"/></svg><span id="detailEdited">尚无编辑</span></dd></dl>
+<button id="btnSummaryExport" class="consult-row" type="button"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V3M7 8l5-5 5 5M5 13v7h14v-7"/></svg><span>导出病历</span></button>
+<details class="consult-more"><summary><span class="consult-ellipsis" aria-hidden="true">···</span>更多选项</summary>
+<button id="btnSummaryCopy" class="consult-row" type="button" disabled><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></svg><span>复制全部</span></button>
+<button id="btnSummaryReview" class="consult-row" type="button"><svg class="consult-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/></svg><span>打开核对清单</span></button>
+</details>
+</details>
+  </aside>
+  <button id="sidebarBackdrop" class="sidebar-backdrop" aria-label="关闭侧栏" hidden="">
+</button>
+</div>
+
+<!-- ══════════════ 知识问答 ══════════════ -->
+<main id="view-kb" class="kb" hidden="">
+  <div class="kb-inner">
+    <div id="kbModeCard" class="kb-mode">
+</div>
+
+    <div id="kbRequestBox" class="kb-ask" hidden="">
+      <p id="kbRequestIntro" class="request-intro"></p>
+      <label class="kb-label sr-only" for="kbQuestion"></label>
+      <textarea id="kbQuestion" class="kb-input" rows="3"></textarea>
+      <p id="kbPrivacy" class="hint hint-warn"></p>
+      <div class="kb-controls">
+        <span id="kbRetention" class="hint"></span>
+        <button id="btnSubmitRequest" class="btn btn-primary">提交需求</button>
+      </div>
+      <div id="kbRequestResult" class="request-result" hidden="" aria-live="polite">
+</div>
+    </div>
+
+    <div id="kbAnswer" class="kb-answer" hidden="">
+</div>
+    <div id="kbCoverage" class="kb-coverage">
+</div>
+  </div>
+</main>
+
+<main id="view-pets" class="pet-page" hidden>
+  <div class="pet-page-heading"><div><h1>宠物档案</h1><p class="hint">按编号、名称或已确认别名检索。档案资料经兽医核对后，作为当次既往背景带入病历。</p></div><button id="btnNewPet" class="btn btn-primary">＋ 新建档案</button></div>
+  <form id="petSearchForm" class="pet-search" role="search"><label for="petSearch">编号 / 名称 / 别名</label><input id="petSearch" class="input" maxlength="80" placeholder="如：Z00001、molly、茉莉"><button class="btn btn-ghost" type="submit">搜索</button><button id="btnClearPetSearch" class="btn btn-quiet" type="button">清除</button></form>
+  <p id="petListStatus" class="hint" role="status"></p>
+  <div class="pet-table-wrap"><table class="pet-table"><thead><tr><th>宠物名称</th><th>种类</th><th>最近问诊</th><th>会话数量</th><th>操作</th></tr></thead><tbody id="petRows"></tbody></table></div>
+  <div class="pet-pages"><button id="petPrev" class="btn btn-ghost">上一页</button><span id="petPage" class="hint"></span><button id="petNext" class="btn btn-ghost">下一页</button></div>
+  <section id="petDetail" class="pet-detail" hidden><div class="pet-page-heading"><h2 id="petDetailTitle"></h2><button id="btnPetConsult" class="btn btn-primary">开始新问诊</button></div><p id="petDetailId" class="hint"></p>
+  <div id="petProfileDetail"></div><div class="controls"><button id="btnEditPet" class="btn btn-ghost">纠正档案</button><button id="btnMergePet" class="btn btn-ghost">合并重复档案</button><button id="btnPetAudit" class="btn btn-quiet">变更记录</button></div><div id="petAudit" hidden></div>
+<div class="controls"><button id="btnPetSessions" class="btn btn-ghost">关联会话</button><button id="btnUnassignedSessions" class="btn btn-ghost">归入未关联的历史会话</button><button id="btnClosePetDetail" class="btn btn-quiet">收起</button></div><p id="petSessionsStatus" class="hint" role="status"></p><div id="petSessions"></div><div class="pet-pages"><button id="petSessionsPrev" class="btn btn-ghost">上一页</button><span id="petSessionsPage" class="hint"></span><button id="petSessionsNext" class="btn btn-ghost">下一页</button></div></section>
+</main>
+<dialog id="unlinkPatientDialog" class="pet-picker" aria-labelledby="unlinkPatientTitle"><h2 id="unlinkPatientTitle">解除本次关联</h2><p class="hint">宠物档案和问诊内容都会保留。本次带入的档案背景将移除；已有病历会重新核对，并撤销确认。</p><form id="unlinkPatientForm"><label for="unlinkPatientReviewer">核对兽医（姓名或工号）</label><input id="unlinkPatientReviewer" class="input" required maxlength="80"><label class="patient-accept"><input id="unlinkPatientAccepted" type="checkbox" required> 我确认解除本次问诊与该宠物的关联。</label><div class="controls"><button id="btnConfirmUnlink" class="btn btn-primary" type="submit">确认解除</button><button id="btnCancelUnlink" class="btn btn-quiet" type="button">取消</button></div><p id="unlinkPatientError" class="hint" role="alert"></p></form></dialog>
+<dialog id="petPicker" class="pet-picker" aria-labelledby="petPickerTitle">
+<div class="pet-page-heading"><h2 id="petPickerTitle">选择宠物档案</h2><button id="btnClosePetPicker" class="btn btn-quiet">关闭</button></div>
+<div id="petPickerExisting"><form id="petPickerSearchForm" class="pet-search"><label for="petPickerSearch">编号 / 名称 / 别名</label><input id="petPickerSearch" class="input" maxlength="80" placeholder="搜索已有宠物"><button class="btn btn-ghost" type="submit">搜索</button></form><div id="petPickerResults"></div><div class="pet-pages"><button id="petPickerPrev" class="btn btn-ghost">上一页</button><span id="petPickerPage" class="hint"></span><button id="petPickerNext" class="btn btn-ghost">下一页</button></div></div>
+<form id="petCreateForm" class="pet-create" hidden><p id="patientEditorHint" class="hint"></p><div id="patientEditorFields"></div>
+<details id="patientVisitDetails"><summary>本次就诊资料（选填）</summary><div id="patientObservationFields"></div></details><div id="patientDecisions"></div>
+<label for="patientReviewer">核对兽医（姓名或工号）</label><input id="patientReviewer" class="input" maxlength="80" required autocomplete="off">
+<label class="patient-accept"><input id="patientAccepted" type="checkbox" required> 我已核对疑似资料与原文，并处理差异；保存以下资料。</label>
+<button id="btnCreatePet" class="btn btn-primary" type="submit">确认保存</button></form>
+<p id="petPickerStatus" class="hint" role="status"></p></dialog>
+<main id="view-manage" class="manage" hidden="">
+  <div class="manage-inner">
+    <div class="manage-heading">
+<div><h1>设置与管理</h1><p class="hint">连接豆包，找回之前的会话。</p>
+</div>
+      <button id="btnNewSession" class="btn btn-primary">新建会话</button>
+</div>
+    <section class="block" aria-labelledby="settingsTitle">
+      <h2 id="settingsTitle" class="block-title">模型设置</h2>
+      <p id="settingsSummary" class="hint" aria-live="polite">正在读取配置…</p>
+      <form id="settingsForm" class="settings-form" autocomplete="off">
+        <label for="settingsKey">更新火山方舟 API Key</label>
+        <input id="settingsKey" class="input" type="password" maxlength="1024" autocomplete="new-password" placeholder="仅更换密钥时填写" required="">
+        <p class="hint">保存后，语音转写和病历生成都会使用这把密钥，以及 <span id="settingsModel"></span>。密钥只保存在本机，不会回显。</p>
+        <div class="controls">
+<button id="btnSaveSettings" class="btn btn-primary" type="submit">保存配置</button>
+          <button id="btnTestConnection" class="btn btn-ghost" type="button">测试连接</button>
+</div>
+      </form>
+      <p class="hint">测试会发送一条简短文字，产生少量模型用量；不会发送录音或病历。</p>
+      <div id="settingsResult" class="request-result" role="status" hidden="">
+</div>
+    </section>
+    <section class="block" aria-labelledby="historyTitle">
+      <div class="manage-heading"><h2 id="historyTitle" class="block-title">历史会话 <span id="historyCount" class="count"></span></h2>
+        <button id="btnRefreshHistory" class="btn btn-ghost">刷新列表</button>
+</div>
+      <p class="hint">录音、逐字稿和病历草稿自动保存在本机。打开后可继续核对；复制和导出仍需兽医确认。</p>
+      <div id="historyList" aria-live="polite">
+</div>
+      <div class="history-pages">
+<button id="btnHistoryPrev" class="btn btn-ghost" disabled="">上一页</button>
+        <span id="historyPage" class="hint"></span>
+<button id="btnHistoryNext" class="btn btn-ghost" disabled="">下一页</button>
+</div>
+    </section>
+  </div>
+</main>
+
+<!-- 引用原文抽屉 -->
+<aside id="sourceDrawer" class="drawer" hidden="" aria-label="引用原文">
+  <div class="drawer-head">
+    <strong id="drawerTitle"></strong>
+    <button id="drawerClose" class="btn btn-quiet btn-inline">关闭</button>
+  </div>
+  <div id="drawerMeta" class="drawer-meta">
+</div>
+  <pre id="drawerText" class="drawer-text">
+</pre>
+</aside>
+
+<div id="toast" class="toast" hidden="">
+</div>
+
+
+<script src="{{ url_for('static', filename='app.js') }}">
+</script>
+<script src="{{ url_for('static', filename='history.js') }}">
+</script>
+<script src="{{ url_for('static', filename='session-panels.js') }}">
+</script>
+<script src="{{ url_for('static', filename='workspace-layout.js') }}">
+</script>
+<script src="{{ url_for('static', filename='document-layout.js') }}">
+</script>
+<script src="{{ url_for('static', filename='management.js') }}">
+</script>
+
+
+
+<script src="{{ url_for('static', filename='pets.js') }}"></script>
+<script src="{{ url_for('static', filename='session-summary.js') }}"></script>
+<script src="{{ url_for('static', filename='patient-workspace.js') }}"></script>
+<script src="{{ url_for('static', filename='patient-link.js') }}"></script>
+</body></html>
